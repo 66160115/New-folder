@@ -5,7 +5,7 @@ CREATE TABLE `User` (
     `email` VARCHAR(100) NOT NULL,
     `phone` VARCHAR(15) NULL,
     `password` VARCHAR(255) NOT NULL,
-    `role` ENUM('admin', 'agent', 'customer') NOT NULL DEFAULT 'customer',
+    `role` ENUM('admin', 'staff', 'user') NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `User_email_key`(`email`),

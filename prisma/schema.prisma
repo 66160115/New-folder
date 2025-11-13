@@ -14,8 +14,8 @@ datasource db {
 
 enum UserRole {
   admin
-  agent
-  customer
+  staff
+  user
 }
 
 enum Urgency {
@@ -50,7 +50,7 @@ model User {
   email     String    @unique @map("email") @db.VarChar(100)
   phone     String?   @map("phone") @db.VarChar(15)
   password  String    @map("password") @db.VarChar(255)
-  role      UserRole  @default(customer) @map("role")
+  role      UserRole  @map("role")
   createdAt DateTime  @default(now()) @map("created_at")
 
   // Relations

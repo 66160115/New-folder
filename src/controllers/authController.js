@@ -6,16 +6,18 @@ import { successResponse, errorResponse } from "../utils/response.js";
 
 export async function register(req,res){
     try{
-        const {name, email,password} = req.body;
+        const {name, email,role,phone,password} = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await prisma.user.create({
             data: {
                 name: name,
                 email: email,
+                phone: phone,
+                role: role.toLowerCase(),
                 password: hashedPassword,
             }
         });
-        successResponse(res, "สมัครสมาชิกสำเร็จ", { id: newUser.id, name, email });
+        successResponse(res, "สมัครสมาชิกสำเร็จ", { id: newUser.id, email, role });
     }catch (error) {
         errorResponse(res, error.message, 400);
     }
@@ -24,6 +26,7 @@ export async function register(req,res){
 export async function login(req, res) {
     try {
         const {email,password} = req.body;
+        const ip = req.ip;
         const user = await prisma.user.findFirst({
             where: {
                 email: email,
@@ -35,11 +38,18 @@ export async function login(req, res) {
         if (!isMatch) throw new Error("รหัสผ่านไม่ถูกต้อง");
 
         const token = jwt.sign(
-            { id: user.user_id, email: user.email, role: user.role },
+            { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
-        successResponse(res, "เข้าสู่ระบบสำเร็จ", { token, name: user.name, email: user.email, role: user.role });
+        await prisma.loginHistory.create({
+            data: {
+                loginTime: new Date(),
+                ipAddress: ip,
+                userId: user.id
+            }
+        })
+        successResponse(res, "เข้าสู่ระบบสำเร็จ", { token, email: user.email, role: user.role });
     }catch (error) {
         errorResponse(res, error.message, 400);
     }
