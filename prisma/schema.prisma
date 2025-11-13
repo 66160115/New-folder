@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// =======================
+// ENUMs
+// =======================
+
+enum UserRole {
+  admin
+  agent
+  customer
+}
+
+enum Urgency {
+  low
+  medium
+  high
+  critical
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  resolved
+  closed
+  pending
+}
+enum TicketType {
+  Incident
+  Service_Request
+  Question
+  Bug_Report
+}
+
+// =======================
+// MODELS
+// =======================
+
+// -------- User --------
+model User {
+  id        Int       @id @default(autoincrement()) @map("user_id")
+  name      String    @map("name")
+  email     String    @unique @map("email") @db.VarChar(100)
+  phone     String?   @map("phone") @db.VarChar(15)
+  password  String    @map("password") @db.VarChar(255)
+  role      UserRole  @default(customer) @map("role")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  ticketsCreated   Ticket[]       @relation("TicketCreator")
+  loginHistory     LoginHistory[]
+  activityLogs     ActivityLog[]
+  statusHistories  StatusHistory[]
+  attachments      Attachment[]
+  notifications    Notification[]
+
+  @@map("User")
+}
+
+// -------- Ticket --------
+model Ticket {
+  id          Int           @id @default(autoincrement()) @map("ticket_id")
+  title       String        @map("title") @db.VarChar(250)
+  description String?       @map("description")
+  type        TicketType    @map("type")
+  urgency     Urgency       @default(medium) @map("urgency")
+  status      TicketStatus  @default(open) @map("status")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  userId      Int?          @map("user_id")
+
+  // Relations
+  creator      User?          @relation("TicketCreator", fields: [userId], references: [id], onDelete: SetNull)
+  statusHistory StatusHistory[]
+  attachments   Attachment[]
+  notifications Notification[]
+
+  @@map("Ticket")
+}
+
+// -------- LoginHistory --------
+model LoginHistory {
+  id        Int      @id @default(autoincrement()) @map("login_id")
+  loginTime DateTime @default(now()) @map("login_time")
+  ipAddress String?  @map("ip_address") @db.VarChar(100)
+  userId    Int?     @map("user_id")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("LoginHistory")
+}
+
+// -------- ActivityLog --------
+model ActivityLog {
+  id        Int      @id @default(autoincrement()) @map("log_id")
+  action    String   @map("action") @db.VarChar(200)
+  targetId  Int?     @map("target_id")
+  logTime   DateTime @default(now()) @map("log_time")
+  userId    Int?     @map("user_id")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("ActivityLog")
+}
+
+// -------- StatusHistory --------
+model StatusHistory {
+  id        Int      @id @default(autoincrement()) @map("history_id")
+  oldStatus String?  @map("old_status") @db.VarChar(45)
+  newStatus String   @map("new_status") @db.VarChar(45)
+  remark    String?  @map("remark")
+  changedAt DateTime @default(now()) @map("changed_at")
+
+  ticketId Int? @map("ticket_id")
+  userId   Int? @map("user_id")
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("StatusHistory")
+}
+
+// -------- Attachment --------
+model Attachment {
+  id          Int      @id @default(autoincrement()) @map("attachment_id")
+  filePath    String   @map("file_path") @db.VarChar(200)
+  fileType    String?  @map("file_type") @db.VarChar(50)
+  uploadedAt  DateTime @default(now()) @map("uploaded_at")
+
+  ticketId Int? @map("ticket_id")
+  userId   Int? @map("user_id")
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("Attachment")
+}
+
+// -------- Notification --------
+model Notification {
+  id       Int      @id @default(autoincrement()) @map("notification_id")
+  message  String   @map("message")
+  sentAt   DateTime @default(now()) @map("sent_at")
+  isRead   Boolean  @default(false) @map("is_read")
+
+  ticketId Int? @map("ticket_id")
+  userId   Int? @map("user_id")
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("Notification")
+}
