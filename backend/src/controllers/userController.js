@@ -56,6 +56,13 @@ export async function deleteUser(req,res){
                 id: parseInt(userId)
             }
         })
+        await prisma.activityLog.create({
+            data : {
+                action: `ลบข้อมูลผู้ใช้ ID: ${userId}`,
+                userId: req.user.id,
+                logTime: new Date(),
+            }
+        })
         successResponse(res, "ลบผู้ใช้สำเร็จ");
     }catch (error) {
         errorResponse(res, error.message, 500);
