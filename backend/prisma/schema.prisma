@@ -22,13 +22,12 @@ enum Urgency {
   low
   medium
   high
-  critical
 }
 
 enum TicketStatus {
   open
   in_progress
-  resolved
+  canceled
   closed
   pending
 }
