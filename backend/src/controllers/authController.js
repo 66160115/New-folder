@@ -13,7 +13,7 @@ export async function register(req,res){
                 name: name,
                 email: email,
                 phone: phone,
-                role: role.toLowerCase(),
+                role: role.toUpperCase(),
                 password: hashedPassword,
             }
         });
